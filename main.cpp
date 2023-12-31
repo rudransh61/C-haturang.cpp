@@ -438,17 +438,29 @@ void printboard(int board[8][8])
 int main()
 {
 	int board[8][8] = {
-		{-4, -2, -3, -5, -6, -3, -2, -4},
+		{-4, -2, -3, -6, -5, -3, -2, -4},
 		{-1, -1, -1, -1, -1, -1, -1, -1},
 		{0, 0, 0, 0,0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{1, 1, 1, 1, 1, 1, 1, 1},
-		{4, 2, 3, 5, 6, 3, 2, 4}};
-
+		{4, 2, 3, 6, 5, 3, 2, 4}};
+	int board2[8][8]={
+		{0,2,0,0,-3,0,0,0},
+		{0,0,0,0,0,0,-3,0},
+		{0,0,0,-6,0,0,0,-1},
+		{-4,0,4,1,0,1,0,0},
+		{0,0,1,0,3,0,0,-1},
+		{-5,0,0,1,6,0,0,0},
+		{0,0,0,0,0,0,0,0},
+		{0,0,-2,0,0,0,0,0}
+	};
 	// print the board
+	std::cout<<"BOARD 1"<<std::endl;
 	printboard(board);
+	std::cout<<"BOARD 2"<<std::endl;
+	printboard(board2);
 
 	// all white pawn moves
 	std::vector<std::vector<int>> whitePawnsMoves = allCoveredSquareWhitePawns(board);
@@ -467,6 +479,8 @@ int main()
 
 	// evaluation of board
 	int eval = evaluation(board);
-
+	int eval2 = evaluation(board2);
 	std::cout << "Evaluation of this position : " << eval << std::endl;
+	std::cout << "Evaluation 2nd of this position : " << eval2 << std::endl;
+	
 }
