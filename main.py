@@ -1,111 +1,184 @@
-
 import chess
+import chess.svg
 
-class ChessAI:
-    def __init__(self, depth):
-        self.depth = depth
+from IPython.display import SVG
 
-    def minimax(self, board, depth, alpha, beta, maximizing_player):
-        if depth == 0 or board.is_game_over():
-            return self.evaluate(board)
+pawntable = [
+ 0,  0,  0,  0,  0,  0,  0,  0,
+ 5, 10, 10,-20,-20, 10, 10,  5,
+ 5, -5,-10,  0,  0,-10, -5,  5,
+ 0,  0,  0, 20, 20,  0,  0,  0,
+ 5,  5, 10, 25, 25, 10,  5,  5,
+10, 10, 20, 30, 30, 20, 10, 10,
+50, 50, 50, 50, 50, 50, 50, 50,
+ 0,  0,  0,  0,  0,  0,  0,  0]
 
-        if maximizing_player:
-            max_eval = float('-inf')
-            for move in board.legal_moves:
-                board.push(move)
-                eval = self.minimax(board, depth - 1, alpha, beta, False)
-                board.pop()
-                max_eval = max(max_eval, eval)
-                alpha = max(alpha, eval)
-                if beta <= alpha:
-                    break  # Beta cut-off
-            return max_eval
+knightstable = [
+-50,-40,-30,-30,-30,-30,-40,-50,
+-40,-20,  0,  5,  5,  0,-20,-40,
+-30,  5, 10, 15, 15, 10,  5,-30,
+-30,  0, 15, 20, 20, 15,  0,-30,
+-30,  5, 15, 20, 20, 15,  5,-30,
+-30,  0, 10, 15, 15, 10,  0,-30,
+-40,-20,  0,  0,  0,  0,-20,-40,
+-50,-40,-30,-30,-30,-30,-40,-50]
+
+bishopstable = [
+-20,-10,-10,-10,-10,-10,-10,-20,
+-10,  5,  0,  0,  0,  0,  5,-10,
+-10, 10, 10, 10, 10, 10, 10,-10,
+-10,  0, 10, 10, 10, 10,  0,-10,
+-10,  5,  5, 10, 10,  5,  5,-10,
+-10,  0,  5, 10, 10,  5,  0,-10,
+-10,  0,  0,  0,  0,  0,  0,-10,
+-20,-10,-10,-10,-10,-10,-10,-20]
+
+rookstable = [
+  0,  0,  0,  5,  5,  0,  0,  0,
+ -5,  0,  0,  0,  0,  0,  0, -5,
+ -5,  0,  0,  0,  0,  0,  0, -5,
+ -5,  0,  0,  0,  0,  0,  0, -5,
+ -5,  0,  0,  0,  0,  0,  0, -5,
+ -5,  0,  0,  0,  0,  0,  0, -5,
+  5, 10, 10, 10, 10, 10, 10,  5,
+ 0,  0,  0,  0,  0,  0,  0,  0]
+
+queenstable = [
+-20,-10,-10, -5, -5,-10,-10,-20,
+-10,  0,  0,  0,  0,  0,  0,-10,
+-10,  5,  5,  5,  5,  5,  0,-10,
+  0,  0,  5,  5,  5,  5,  0, -5,
+ -5,  0,  5,  5,  5,  5,  0, -5,
+-10,  0,  5,  5,  5,  5,  0,-10,
+-10,  0,  0,  0,  0,  0,  0,-10,
+-20,-10,-10, -5, -5,-10,-10,-20]
+
+kingstable = [
+ 20, 30, 10,  0,  0, 10, 30, 20,
+ 20, 20,  0,  0,  0,  0, 20, 20,
+-10,-20,-20,-20,-20,-20,-20,-10,
+-20,-30,-30,-40,-40,-30,-30,-20,
+-30,-40,-40,-50,-50,-40,-40,-30,
+-30,-40,-40,-50,-50,-40,-40,-30,
+-30,-40,-40,-50,-50,-40,-40,-30,
+-30,-40,-40,-50,-50,-40,-40,-30]
+
+board = chess.Board()
+SVG(chess.svg.board(board=board,size=400)) 
+def evaluate_board():
+    
+    if board.is_checkmate():
+        if board.turn:
+            return -9999
         else:
-            min_eval = float('inf')
-            for move in board.legal_moves:
-                board.push(move)
-                eval = self.minimax(board, depth - 1, alpha, beta, True)
-                board.pop()
-                min_eval = min(min_eval, eval)
-                beta = min(beta, eval)
-                if beta <= alpha:
-                    break  # Alpha cut-off
-            return min_eval
+            return 9999
+    if board.is_stalemate():
+        return 0
+    if board.is_insufficient_material():
+        return 0
+    
+    wp = len(board.pieces(chess.PAWN, chess.WHITE))
+    bp = len(board.pieces(chess.PAWN, chess.BLACK))
+    wn = len(board.pieces(chess.KNIGHT, chess.WHITE))
+    bn = len(board.pieces(chess.KNIGHT, chess.BLACK))
+    wb = len(board.pieces(chess.BISHOP, chess.WHITE))
+    bb = len(board.pieces(chess.BISHOP, chess.BLACK))
+    wr = len(board.pieces(chess.ROOK, chess.WHITE))
+    br = len(board.pieces(chess.ROOK, chess.BLACK))
+    wq = len(board.pieces(chess.QUEEN, chess.WHITE))
+    bq = len(board.pieces(chess.QUEEN, chess.BLACK))
+    
+    material = 100*(wp-bp)+320*(wn-bn)+330*(wb-bb)+500*(wr-br)+900*(wq-bq)
+    
+    pawnsq = sum([pawntable[i] for i in board.pieces(chess.PAWN, chess.WHITE)])
+    pawnsq= pawnsq + sum([-pawntable[chess.square_mirror(i)] 
+                                    for i in board.pieces(chess.PAWN, chess.BLACK)])
+    knightsq = sum([knightstable[i] for i in board.pieces(chess.KNIGHT, chess.WHITE)])
+    knightsq = knightsq + sum([-knightstable[chess.square_mirror(i)] 
+                                    for i in board.pieces(chess.KNIGHT, chess.BLACK)])
+    bishopsq= sum([bishopstable[i] for i in board.pieces(chess.BISHOP, chess.WHITE)])
+    bishopsq= bishopsq + sum([-bishopstable[chess.square_mirror(i)] 
+                                    for i in board.pieces(chess.BISHOP, chess.BLACK)])
+    rooksq = sum([rookstable[i] for i in board.pieces(chess.ROOK, chess.WHITE)]) 
+    rooksq = rooksq + sum([-rookstable[chess.square_mirror(i)] 
+                                    for i in board.pieces(chess.ROOK, chess.BLACK)])
+    queensq = sum([queenstable[i] for i in board.pieces(chess.QUEEN, chess.WHITE)]) 
+    queensq = queensq + sum([-queenstable[chess.square_mirror(i)] 
+                                    for i in board.pieces(chess.QUEEN, chess.BLACK)])
+    kingsq = sum([kingstable[i] for i in board.pieces(chess.KING, chess.WHITE)]) 
+    kingsq = kingsq + sum([-kingstable[chess.square_mirror(i)] 
+                                    for i in board.pieces(chess.KING, chess.BLACK)])
+    
+    eval = material + pawnsq + knightsq + bishopsq+ rooksq+ queensq + kingsq
+    if board.turn:
+        return eval
+    else:
+        return -eval
+    
+def alphabeta( alpha, beta, depthleft ):
+    bestscore = -9999
+    if( depthleft == 0 ):
+        return quiesce( alpha, beta )
+    for move in board.legal_moves:
+        board.push(move)   
+        score = -alphabeta( -beta, -alpha, depthleft - 1 )
+        board.pop()
+        if( score >= beta ):
+            return score
+        if( score > bestscore ):
+            bestscore = score
+        if( score > alpha ):
+            alpha = score   
+    return bestscore
 
-    def get_best_move(self, board):
-        best_move = None
-        max_eval = float('-inf')
-        alpha = float('-inf')
-        beta = float('inf')
+def quiesce( alpha, beta ):
+    stand_pat = evaluate_board()
+    if( stand_pat >= beta ):
+        return beta
+    if( alpha < stand_pat ):
+        alpha = stand_pat
+
+    for move in board.legal_moves:
+        if board.is_capture(move):
+            board.push(move)        
+            score = -quiesce( -beta, -alpha )
+            board.pop()
+
+            if( score >= beta ):
+                return beta
+            if( score > alpha ):
+                alpha = score  
+    return alpha
+
+import chess.polyglot
+
+def selectmove(depth):
+    try:
+        move = chess.polyglot.MemoryMappedReader("bookfish.bin").weighted_choice(board).move()
+        movehistory.append(move)
+        return move
+    except:
+        bestMove = chess.Move.null()
+        bestValue = -99999
+        alpha = -100000
+        beta = 100000
         for move in board.legal_moves:
             board.push(move)
-            eval = self.minimax(board, self.depth - 1, alpha, beta, False)
+            boardValue = -alphabeta(-beta, -alpha, depth-1)
+            if boardValue > bestValue:
+                bestValue = boardValue;
+                bestMove = move
+            if( boardValue > alpha ):
+                alpha = boardValue
             board.pop()
-            if eval > max_eval:
-                max_eval = eval
-                best_move = move
-        return best_move
+        movehistory.append(bestMove)
+        return bestMove
+    
+movehistory =[]
+board = chess.Board()
+mov = selectmove(3)
+board.push(mov)
+SVG(chess.svg.board(board=board,size=400))
 
-    def evaluate(self, board):
-        # Basic evaluation function
-        # Assign values to pieces and calculate score
-        score = 0
-        for square in chess.SQUARES:
-            piece = board.piece_at(square)
-            if piece:
-                if piece.color == board.turn:
-                    score += self.piece_value(piece)
-                else:
-                    score -= self.piece_value(piece)
-        return score
-
-
-    def piece_value(self, piece):
-        if piece.piece_type == chess.PAWN:
-            return 1
-        elif piece.piece_type == chess.KNIGHT:
-            return 3
-        elif piece.piece_type == chess.BISHOP:
-            return 3
-        elif piece.piece_type == chess.ROOK:
-            return 5
-        elif piece.piece_type == chess.QUEEN:
-            return 9
-        elif piece.piece_type == chess.KING:
-            return 1000  # This value is chosen arbitrarily for demonstration
-
-def print_board(board):
-    print(board)
-
-def main():
-    import chess
-
-    # Initialize chess board
-    board = chess.Board()
-
-    # Initialize AI with depth
-    ai = ChessAI(depth=3)
-
-    while not board.is_game_over():
-        print_board(board)
-        if board.turn == chess.WHITE:
-            user_move = input("Enter your move (in UCI format): ")
-            try:
-                move = chess.Move.from_uci(user_move)
-                if move in board.legal_moves:
-                    board.push(move)
-                else:
-                    print("Invalid move. Try again.")
-            except ValueError:
-                print("Invalid move format. Try again.")
-        else:
-            # AI's turn
-            best_move = ai.get_best_move(board)
-            board.push(best_move)
-            print("AI's move:", best_move.uci())
-
-    print("Game Over")
-    print("Result:", board.result())
-
-if __name__ == "__main__":
-    main()
+board.push_san("d5")
+SVG(chess.svg.board(board=board,size=400))
